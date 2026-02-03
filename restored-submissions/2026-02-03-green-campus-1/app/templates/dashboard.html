@@ -1,0 +1,20 @@
+{% extends "flash.html" %}
+
+{% block content %}
+    <h1>Welcome to the Green Campus management system</h1>
+    <h2>Buildings List</h2>
+    <div>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Location</th>
+            </tr>
+            {% for  building in  buildings %}
+                <tr>
+                    <th><a href="/building/{{building.id}}">{{building.name}}</a></th>
+                    <th>{{building.location}}</th>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}

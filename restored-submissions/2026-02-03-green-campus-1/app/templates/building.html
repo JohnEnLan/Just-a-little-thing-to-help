@@ -1,0 +1,70 @@
+{% extends "flash.html" %}
+
+{% block content %}
+    <h1>Details for {{building.name}}</h1>
+    {% if not building %}
+        <p>No data about {{building.name}} saved yet.</p>
+    {% else %}
+        <h2>Energy Reading</h2>
+        <div>
+            <table>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Electricity_kwh</th>
+                </tr>
+                {% for r in  readings_data %}
+                    <tr>
+                        <th>{{r["timestamp"]}}</th>
+                        <th>{{r["electricity_kwh"]}}</th>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <br>
+        <h2>Anomaly Record</h2>
+        <div>
+            <table>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Electricity_kwh</th>
+                    <th>anomaly_score</th>
+                </tr>
+                {% for a in  anomalies_data %}
+                    <tr>
+                        <th>{{a["timestamp"]}}</th>
+                        <th>{{a["electricity_kwh"]}}</th>
+                        <th>{{a["anomaly_score"]}}</th>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <br>
+        <h2>Anomaly Detection</h2>
+        <div>
+            <ul>
+                <li>Status: {{dict["status"]}}</li>
+                <li>Anomalies: {{dict["anomalies_found"]}}</li>
+            </ul>
+            <br>
+            {% if not dict["results"] %}
+                <p>Nah</p>
+            {% else %}
+                <table>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Electricity_kwh</th>
+                        <th>anomaly_score</th>
+                    </tr>
+                    {% for d in  dict["results"] %}
+                        <tr>
+                            <th>{{d["timestamp"]}}</th>
+                            <th>{{d["electricity_kwh"]}}</th>
+                            <th>{{d["anomaly_score"]}}</th>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+        </div>
+    {% endif %}    
+    
+{% endblock %}
