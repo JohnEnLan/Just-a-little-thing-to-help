@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Green Campus{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-copy-block">
+        <h1>Campus energy visibility with anomaly detection built in.</h1>
+        <p class="hero-copy">
+            Browse buildings, inspect the latest 30 days of hourly readings, and review
+            anomaly detection results without any manual trigger.
+        </p>
+        <p class="panel-note">{{ auto_refresh_note }}</p>
+    </div>
+    <div class="hero-scene">
+        <div class="hero-scene__leaf-layer" aria-hidden="true">
+            <span class="hero-scene__leaf hero-scene__leaf--one"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--two"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--three"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--four"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--five"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--six"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--seven"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--eight"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--nine"></span>
+            <span class="hero-scene__leaf hero-scene__leaf--ten"></span>
+        </div>
+        <div class="hero-scene__veil"></div>
+        <img
+            class="hero-crest-shadow"
+            src="{{ url_for('picture_of_uob') }}"
+            alt=""
+            aria-hidden="true"
+        >
+        <div class="hero-crest-frame">
+            <img
+                class="hero-crest-mark"
+                src="{{ url_for('picture_of_uob') }}"
+                alt="University of Birmingham crest"
+            >
+        </div>
+    </div>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span class="stat-label">Buildings</span>
+        <strong class="stat-value">{{ stats.total_buildings }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-label">Energy Readings</span>
+        <strong class="stat-value">{{ stats.total_readings }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-label">Detected Anomalies</span>
+        <strong class="stat-value">{{ stats.total_anomalies }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-label">Detected Today</span>
+        <strong class="stat-value">{{ stats.anomalies_today }}</strong>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Buildings</p>
+            <h2>Campus portfolio</h2>
+        </div>
+        <p class="panel-note">Each card links to a detail page with the charts and anomaly table. {{ auto_refresh_note }}</p>
+    </div>
+
+    {% if building_cards %}
+    <div class="building-grid">
+        {% for building in building_cards %}
+        <article class="building-card">
+            <div class="building-card__header">
+                <div>
+                    <h3>{{ building.name }}</h3>
+                    <p>{{ building.location }}</p>
+                </div>
+                <span class="pill">{{ building.anomaly_count }} anomalies</span>
+            </div>
+
+            <dl class="metric-list">
+                <div>
+                    <dt>Capacity</dt>
+                    <dd>
+                        {% if building.capacity_kw %}
+                            {{ "%.0f"|format(building.capacity_kw) }} kW
+                        {% else %}
+                            Not set
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Latest Reading</dt>
+                    <dd>
+                        {% if building.latest_reading is not none %}
+                            {{ "%.2f"|format(building.latest_reading) }} kWh
+                        {% else %}
+                            No data
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Last Timestamp</dt>
+                    <dd>{{ building.latest_timestamp or "No data" }}</dd>
+                </div>
+            </dl>
+
+            <a class="button button-primary" href="{{ url_for('building', building_id=building.id) }}">
+                Open Building
+            </a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No buildings available yet</h3>
+        <p>Sample data has not been created. Run <code>python seed_data.py</code> in this folder to populate the database.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
