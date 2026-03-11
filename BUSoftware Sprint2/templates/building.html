@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ building.name }} | Green Campus{% endblock %}
+
+{% block content %}
+<section class="detail-hero">
+    <div>
+        <a class="back-link" href="{{ url_for('dashboard') }}">Back to dashboard</a>
+        <p class="eyebrow">Building detail</p>
+        <h1>{{ building.name }}</h1>
+        <p class="hero-copy">{{ building.location }}{% if building.capacity_kw %} - Rated capacity {{ "%.0f"|format(building.capacity_kw) }} kW{% endif %}</p>
+    </div>
+    <div class="detail-summary">
+        <article class="mini-stat">
+            <span>30-day readings</span>
+            <strong>{{ readings_count }}</strong>
+        </article>
+        <article class="mini-stat">
+            <span>Stored anomalies</span>
+            <strong id="anomaly-count-label">{{ anomaly_count }}</strong>
+        </article>
+        <article class="mini-stat">
+            <span>Latest reading</span>
+            <strong>{{ latest_reading_label }}</strong>
+        </article>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Detection</p>
+            <h2>48-hour monitoring and 7-day overview</h2>
+        </div>
+        <div class="action-row">
+            <span class="pill">Automatic detection enabled</span>
+            <span id="detection-status" class="status-line">Loading readings, estimates, and anomaly history...</span>
+        </div>
+    </div>
+
+    <p class="panel-note">
+        The 48-hour views use hourly readings. Estimated CO2e uses
+        {{ "%.2f"|format(conversion_factors.estimated_co2_kg_per_kwh) }} kg per kWh and estimated cost uses
+        GBP {{ "%.2f"|format(conversion_factors.estimated_cost_gbp_per_kwh) }} per kWh.
+        {{ auto_refresh_note }}
+    </p>
+
+    <div
+        id="building-analytics"
+        data-building-id="{{ building.id }}"
+        data-building-name="{{ building.name }}"
+        data-co2-factor="{{ conversion_factors.estimated_co2_kg_per_kwh }}"
+        data-cost-factor="{{ conversion_factors.estimated_cost_gbp_per_kwh }}"
+    >
+        <div class="chart-grid chart-grid--triple">
+            <article class="chart-card">
+                <div class="chart-card__header">
+                    <h3>Electricity</h3>
+                    <p id="chart-energy-caption">48-hour electricity profile with anomaly markers.</p>
+                </div>
+                <div id="chart-energy-48" class="chart-surface chart-surface--compact"></div>
+            </article>
+
+            <article class="chart-card">
+                <div class="chart-card__header">
+                    <h3>Estimated CO2e</h3>
+                    <p>Estimated carbon impact for the same 48-hour window.</p>
+                </div>
+                <div id="chart-carbon-48" class="chart-surface chart-surface--compact"></div>
+            </article>
+
+            <article class="chart-card">
+                <div class="chart-card__header">
+                    <h3>Estimated Cost</h3>
+                    <p>Estimated electricity spend for the latest 48 hours.</p>
+                </div>
+                <div id="chart-cost-48" class="chart-surface chart-surface--compact"></div>
+            </article>
+        </div>
+
+        <article class="chart-card chart-card--full">
+            <div class="chart-card__header">
+                <h3>7-Day Electricity and CO2e Overview</h3>
+                <p>Continuous hourly electricity and estimated CO2e across the latest 7 days.</p>
+            </div>
+            <div id="chart-overview-7d" class="chart-surface"></div>
+        </article>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Results</p>
+            <h2>Anomaly summary table</h2>
+        </div>
+        <p class="panel-note">Rows appear after the API returns anomaly records for this building.</p>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Electricity (kWh)</th>
+                    <th>Estimated CO2e (kg)</th>
+                    <th>Estimated Cost (GBP)</th>
+                    <th>Anomaly Score</th>
+                </tr>
+            </thead>
+            <tbody id="anomaly-table-body">
+                <tr id="anomaly-empty-row">
+                    <td colspan="5">No anomalies detected yet. Automatic detection will refresh each hour.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

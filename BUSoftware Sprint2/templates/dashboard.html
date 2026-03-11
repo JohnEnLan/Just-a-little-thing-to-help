@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Green Campus{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-copy-block">
+        <h1>Campus energy visibility with anomaly detection built in.</h1>
+        <p class="hero-copy">
+            Browse buildings, inspect the latest 30 days of hourly readings, and review
+            anomaly detection results without any manual trigger.
+        </p>
+        <p class="panel-note">{{ auto_refresh_note }}</p>
+    </div>
+    <div class="hero-scene">
+        <div class="hero-scene__leaf-layer" aria-hidden="true">
+            {% set leaf_specs = [
+                {"left": -2, "size": 34, "start": "#183b24", "end": "#4f8b63", "duration": 14.8, "travel": 260, "delay": 0.0},
+                {"left": 8, "size": 30, "start": "#215c3c", "end": "#79a882", "duration": 16.4, "travel": 300, "delay": 2.2},
+                {"left": 18, "size": 24, "start": "#3f7b58", "end": "#a6c59b", "duration": 13.2, "travel": 240, "delay": 4.4},
+                {"left": 30, "size": 28, "start": "#215c3c", "end": "#5f8f68", "duration": 15.8, "travel": 280, "delay": 1.4},
+                {"left": 42, "size": 22, "start": "#4f8b63", "end": "#a6c59b", "duration": 12.6, "travel": 220, "delay": 3.6},
+                {"left": 54, "size": 32, "start": "#183b24", "end": "#79a882", "duration": 17.2, "travel": 320, "delay": 5.8},
+                {"left": 64, "size": 26, "start": "#215c3c", "end": "#8ab58c", "duration": 14.4, "travel": 250, "delay": 7.1},
+                {"left": 74, "size": 20, "start": "#3f7b58", "end": "#a6c59b", "duration": 11.9, "travel": 210, "delay": 0.9},
+                {"left": 84, "size": 29, "start": "#183b24", "end": "#5f8f68", "duration": 15.1, "travel": 290, "delay": 4.9},
+                {"left": 94, "size": 24, "start": "#4f8b63", "end": "#a6c59b", "duration": 13.8, "travel": 230, "delay": 6.6},
+                {"left": 4, "size": 27, "start": "#215c3c", "end": "#8ab58c", "duration": 12.4, "travel": 215, "delay": 1.1},
+                {"left": 14, "size": 21, "start": "#5f8f68", "end": "#a6c59b", "duration": 15.3, "travel": 255, "delay": 5.1},
+                {"left": 38, "size": 31, "start": "#183b24", "end": "#79a882", "duration": 16.1, "travel": 305, "delay": 2.9},
+                {"left": 58, "size": 23, "start": "#3f7b58", "end": "#8ab58c", "duration": 11.7, "travel": 205, "delay": 6.3},
+                {"left": 78, "size": 28, "start": "#215c3c", "end": "#5f8f68", "duration": 14.9, "travel": 275, "delay": 2.0},
+                {"left": 89, "size": 22, "start": "#4f8b63", "end": "#a6c59b", "duration": 12.8, "travel": 225, "delay": 7.4}
+            ] %}
+            {% for wave in range(3) %}
+                {% for leaf in leaf_specs %}
+                <span
+                    class="hero-scene__leaf"
+                    style="
+                        --crest-leaf-size: {{ leaf.size - (wave % 2) }}px;
+                        --crest-leaf-start: {{ leaf.start }};
+                        --crest-leaf-end: {{ leaf.end }};
+                        --crest-leaf-duration: {{ '%.1f'|format(leaf.duration + (wave * 0.7)) }}s;
+                        --crest-leaf-travel: {{ leaf.travel + (wave * 18) }}px;
+                        left: {{ '%.1f'|format(leaf.left + (wave * 1.8)) }}%;
+                        animation-delay: {{ '%.1f'|format(leaf.delay + (wave * 0.9)) }}s;
+                    "
+                ></span>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="hero-scene__veil"></div>
+        <img
+            class="hero-crest-shadow"
+            src="{{ url_for('picture_of_uob') }}"
+            alt=""
+            aria-hidden="true"
+        >
+        <div class="hero-crest-frame">
+            <img
+                class="hero-crest-mark"
+                src="{{ url_for('picture_of_uob') }}"
+                alt="University of Birmingham crest"
+            >
+        </div>
+    </div>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span class="stat-label">Buildings</span>
+        <strong class="stat-value">{{ stats.total_buildings }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-label">Energy Readings</span>
+        <strong class="stat-value">{{ stats.total_readings }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-label">Detected Anomalies</span>
+        <strong class="stat-value">{{ stats.total_anomalies }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-label">Detected Today</span>
+        <strong class="stat-value">{{ stats.anomalies_today }}</strong>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Overview</p>
+            <h2>Three-building electricity comparison</h2>
+        </div>
+        <p class="panel-note panel-note--stacked">
+            <span>One chart with the three campus buildings.</span>
+            <span>Latest 7 days of hourly electricity usage.</span>
+        </p>
+    </div>
+
+    <div
+        id="dashboard-electricity-overview"
+        data-api-url="{{ url_for('api_dashboard_electricity_overview') }}"
+    >
+        <div id="dashboard-electricity-chart" class="chart-surface"></div>
+    </div>
+    <p id="dashboard-electricity-status" class="status-line">Loading three-building comparison...</p>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div class="panel-heading__copy panel-heading__copy--offset">
+            <p class="eyebrow">Buildings</p>
+            <h2>Campus portfolio</h2>
+        </div>
+        <p class="panel-note panel-note--split">
+            <span>Each card links to a detail page with the charts and anomaly table.</span>
+            <span>{{ auto_refresh_note }}</span>
+        </p>
+    </div>
+
+    {% if building_cards %}
+    <div class="building-grid">
+        {% for building in building_cards %}
+        <article class="building-card">
+            <div class="building-card__header">
+                <div>
+                    <h3>{{ building.name }}</h3>
+                    <p>{{ building.location }}</p>
+                </div>
+                <span class="pill">{{ building.anomaly_count }} anomalies</span>
+            </div>
+
+            <dl class="metric-list">
+                <div>
+                    <dt>Capacity</dt>
+                    <dd>
+                        {% if building.capacity_kw %}
+                            {{ "%.0f"|format(building.capacity_kw) }} kW
+                        {% else %}
+                            Not set
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Latest Reading</dt>
+                    <dd>
+                        {% if building.latest_reading is not none %}
+                            {{ "%.2f"|format(building.latest_reading) }} kWh
+                        {% else %}
+                            No data
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Last Timestamp</dt>
+                    <dd>{{ building.latest_timestamp or "No data" }}</dd>
+                </div>
+            </dl>
+
+            <a class="button button-primary" href="{{ url_for('building', building_id=building.id) }}">
+                Open Building
+            </a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No buildings available yet</h3>
+        <p>Sample data has not been created. Run <code>python seed_data.py</code> in this folder to populate the database.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard_charts.js') }}"></script>
+{% endblock %}

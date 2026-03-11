@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Suggestions | Green Campus{% endblock %}
+
+{% block content %}
+<section class="detail-hero">
+    <div>
+        <a class="back-link" href="{{ url_for('dashboard') }}">Back to dashboard</a>
+        <p class="eyebrow">Suggestions</p>
+        <h1>Student feedback for a greener campus</h1>
+        <p class="hero-copy">
+            Share ideas, attach a reference image if it helps, and surface the best
+            suggestions by voting on them.
+        </p>
+    </div>
+    <div class="detail-summary">
+        <article class="mini-stat">
+            <span>Total suggestions</span>
+            <strong>{{ feedback_stats.total_suggestions }}</strong>
+        </article>
+        <article class="mini-stat">
+            <span>Total likes</span>
+            <strong>{{ feedback_stats.total_likes }}</strong>
+        </article>
+        <article class="mini-stat">
+            <span>Latest submission</span>
+            <strong>{{ feedback_stats.latest_submission }}</strong>
+        </article>
+    </div>
+</section>
+
+<section class="feedback-layout">
+    <section class="panel">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Submit</p>
+                <h2>Share a suggestion</h2>
+            </div>
+            <p class="panel-note panel-note--stacked">
+                Title and content are required.
+                Images are optional and support {{ allowed_image_extensions }}.
+            </p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages or form_errors %}
+        <div class="flash-stack">
+            {% for category, message in messages %}
+            <div class="flash flash--{{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% for message in form_errors %}
+            <div class="flash flash--error">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form
+            class="feedback-form"
+            action="{{ url_for('feedback_submit') }}"
+            method="post"
+            enctype="multipart/form-data"
+            novalidate
+        >
+            <input type="hidden" name="sort" value="{{ current_sort }}">
+
+            <label class="feedback-form__field">
+                <span>Title</span>
+                <input
+                    type="text"
+                    name="title"
+                    maxlength="160"
+                    required
+                    value="{{ form_data.get('title', '') }}"
+                    placeholder="For example: Add motion-sensor lighting in study rooms"
+                >
+            </label>
+
+            <label class="feedback-form__field">
+                <span>Suggestion</span>
+                <textarea
+                    name="content"
+                    rows="6"
+                    required
+                    placeholder="Describe the idea, the problem it solves, and where it should happen."
+                >{{ form_data.get('content', '') }}</textarea>
+            </label>
+
+            <div class="feedback-form__field">
+                <label for="suggestion-image">
+                    <span>Reference image</span>
+                </label>
+                <div class="file-picker" data-file-picker>
+                    <input
+                        class="file-picker__input"
+                        id="suggestion-image"
+                        type="file"
+                        name="image"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                    >
+                    <label class="button button-secondary file-picker__button" for="suggestion-image">
+                        Choose image
+                    </label>
+                    <span class="file-picker__name" data-file-name>No file selected</span>
+                </div>
+                <small>Optional. Common image formats only.</small>
+            </div>
+
+            <button class="button button-primary" type="submit">Submit suggestion</button>
+        </form>
+    </section>
+
+    <section class="panel" id="feedback-root">
+        <div class="panel-heading">
+            <div class="feedback-heading-copy">
+                <p class="eyebrow">Community list</p>
+                <h2>
+                    <span>Suggestions</span>
+                    <span>ranked by</span>
+                    <span>support</span>
+                </h2>
+            </div>
+            <div class="feedback-panel-tools">
+                <div class="sort-toggle" aria-label="Suggestion sorting" data-sort-toggle>
+                    {% for sort_key, sort_label in sort_options.items() %}
+                    <a
+                        class="sort-toggle__link{% if current_sort == sort_key %} is-active{% endif %}"
+                        href="{{ url_for('feedback', sort=sort_key) }}"
+                        data-sort-link
+                        data-sort-mode="{{ sort_key }}"
+                    >
+                        {{ sort_label }}
+                    </a>
+                    {% endfor %}
+                </div>
+                <p class="panel-note panel-note--stacked" data-sort-note>
+                    <span data-sort-note-line-one>
+                        {% if current_sort == 'latest' %}
+                        Sorted by newest submissions first.
+                        {% else %}
+                        Sorted by likes first, then by newest submissions.
+                        {% endif %}
+                    </span>
+                    <span>Click a card to expand the full text.</span>
+                    <span>Images appear in the expanded view.</span>
+                </p>
+            </div>
+        </div>
+
+        {% if suggestion_cards %}
+        <div class="suggestion-list" id="suggestion-list">
+            {% for item in suggestion_cards %}
+            <article
+                class="suggestion-card"
+                data-suggestion-card
+                data-like-count-value="{{ item.like_count }}"
+                data-created-at="{{ item.suggestion.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}"
+                tabindex="0"
+                role="button"
+                aria-expanded="false"
+            >
+                <div class="suggestion-card__header">
+                    <div class="suggestion-card__copy">
+                        <h3>{{ item.suggestion.title }}</h3>
+                        <p class="suggestion-card__content">{{ item.suggestion.content }}</p>
+                    </div>
+                    <div class="suggestion-card__meta">
+                        <span class="pill" data-like-count>{{ item.like_count }} likes</span>
+                        <time datetime="{{ item.suggestion.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                            {{ item.created_label }}
+                        </time>
+                    </div>
+                </div>
+
+                {% if item.image_url %}
+                <div class="suggestion-card__media">
+                    <img src="{{ item.image_url }}" alt="Suggestion image for {{ item.suggestion.title }}">
+                </div>
+                {% endif %}
+
+                <div class="suggestion-card__footer">
+                    <button
+                        class="button button-secondary suggestion-like-button{% if item.user_liked %} is-liked{% endif %}"
+                        type="button"
+                        data-like-button
+                        data-like-url="{{ url_for('api_like_suggestion', suggestion_id=item.suggestion.id) }}"
+                        {% if item.user_liked %}disabled{% endif %}
+                    >
+                        <span data-like-label>{% if item.user_liked %}Liked{% else %}Like{% endif %}</span>
+                    </button>
+                    <span class="status-line suggestion-like-message" data-like-message>
+                        {% if item.user_liked %}You have already liked this suggestion.{% endif %}
+                    </span>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No suggestions yet</h3>
+            <p>Be the first student to share a campus improvement idea.</p>
+        </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/suggestions.js') }}"></script>
+{% endblock %}
